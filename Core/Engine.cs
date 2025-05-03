@@ -5,6 +5,7 @@ using Engine.Core.ECS;
 using Engine.Core.Input;
 using Engine.Core.Logging;
 using Engine.Core.ECS.Components;
+using Engine.Core.Rendering;
 
 namespace Engine.Core
 {
@@ -54,6 +55,21 @@ namespace Engine.Core
                 throw new InvalidOperationException("GL context is not initialized");
 
             _entityManager = new EntityManager();
+            var shaderManager = new ShaderManager(gl, _logger);
+
+            // 1. Система сцены (создаёт начальные сущности)
+            var sceneSystem = new SceneSystem(gl, _entityManager, shaderManager);
+            _systemManager.RegisterSystem(sceneSystem);
+            sceneSystem.Initialize();
+
+            // 2. Система акторов
+            var actorSystem = new ActorSystem(_entityManager);
+            _systemManager.RegisterSystem(actorSystem);
+            actorSystem.Initialize();
+
+            // 3. Система управления камерой
+            var cameraControllerSystem = new CameraControllerSystem(_entityManager, _inputService, _logger, 5.0f, 0.1f, _windowService);
+            _systemManager.RegisterSystem(cameraControllerSystem);
 
         }
 
