@@ -4,6 +4,7 @@ using Engine.Core.Windowing;
 using Engine.Core.ECS;
 using Engine.Core.Input;
 using Engine.Core.Logging;
+using Engine.Core.ECS.Components;
 
 namespace Engine.Core
 {
@@ -15,18 +16,19 @@ namespace Engine.Core
         private readonly IWindowService _windowService;
         private readonly IGraphicsContext _graphicsContext;
         private readonly SystemManager _systemManager;
+        private EntityManager _entityManager;
         private readonly IInputService _inputService;
         private readonly ILogger? _logger;
         private bool _isRunning;
 
         public bool IsRunning => _isRunning;
 
-     public Engine(
-            IWindowService windowService,
-            IGraphicsContext graphicsContext,
-            SystemManager systemManager,
-            IInputService inputService,
-            ILogger? logger = null)
+        public Engine(
+               IWindowService windowService,
+               IGraphicsContext graphicsContext,
+               SystemManager systemManager,
+               IInputService inputService,
+               ILogger? logger = null)
         {
             _windowService = windowService ?? throw new ArgumentNullException(nameof(windowService));
             _graphicsContext = graphicsContext ?? throw new ArgumentNullException(nameof(graphicsContext));
@@ -40,29 +42,41 @@ namespace Engine.Core
         /// </summary>
         public void Run()
         {
+            _windowService.Initialize();
+            _graphicsContext.Initialize();
             _isRunning = true;
-            // Пример простого главного цикла
-            while (_isRunning)
-            {
-                // Здесь должна быть логика обновления и рендеринга
-                // Для примера просто завершаем цикл
-                _isRunning = false;
-            }
         }
 
         public void InitializeSystems()
         {
-            // TODO: Реализовать инициализацию систем
+            var gl = (_graphicsContext as GraphicsContext)?.GL;
+            if (gl == null)
+                throw new InvalidOperationException("GL context is not initialized");
+
+            _entityManager = new EntityManager();
+
         }
 
         public void UpdateAndRender(double deltaTime)
         {
-            // TODO: Реализовать обновление и рендеринг
+            // 1. Обработка событий ввода в начале кадра
+            _inputService.Update();
+
+            // 2. Обновление логики ECS
+            _systemManager.UpdateAll(deltaTime);
+
+            // 3. Подготовка рендера: очистка экрана
+            _graphicsContext.Clear(new Color(0.2f, 0.2f, 0.2f, 1f));
+
+            // 4. Рендеринг всех систем (включая RenderSystem)
+            _systemManager.RenderAll();
         }
 
         public void OnResize(Silk.NET.Maths.Vector2D<int> size)
         {
-            // TODO: Реализовать обработку изменения размера окна
+            // 1. Обновить viewport OpenGL
+            var gl = (_graphicsContext as GraphicsContext)?.GL;
+            gl?.Viewport(0, 0, (uint)size.X, (uint)size.Y);
         }
     }
 }
