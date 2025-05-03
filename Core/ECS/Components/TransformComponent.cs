@@ -52,5 +52,17 @@ namespace Engine.Core.ECS.Components
                 new Vector3D<float>(0, 0, 0),
                 Quaternion<float>.Identity,
                 new Vector3D<float>(1, 1, 1));
+
+        public static TransformComponent CreateTransform(
+            Vector3D<float> position,
+            Vector3D<float>? rotation = null,
+            Vector3D<float>? scale = null)
+        {
+            var rot = rotation.HasValue
+                ? Quaternion<float>.CreateFromYawPitchRoll(rotation.Value.Y, rotation.Value.X, rotation.Value.Z)
+                : Quaternion<float>.Identity;
+            var scl = scale ?? new Vector3D<float>(1, 1, 1);
+            return new TransformComponent(position, rot, scl);
+        }
     }
 } 

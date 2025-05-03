@@ -21,6 +21,7 @@ namespace Engine.Core
         private readonly IInputService _inputService;
         private readonly ILogger? _logger;
         private bool _isRunning;
+        private RenderSystem _renderSystem;
 
         public bool IsRunning => _isRunning;
 
@@ -70,6 +71,10 @@ namespace Engine.Core
             // 3. Система управления камерой
             var cameraControllerSystem = new CameraControllerSystem(_entityManager, _inputService, _logger, 5.0f, 0.1f, _windowService);
             _systemManager.RegisterSystem(cameraControllerSystem);
+
+            // 4. Система рендера
+            _renderSystem = new RenderSystem(gl, _entityManager, shaderManager);
+            _systemManager.RegisterSystem(_renderSystem);
 
         }
 
