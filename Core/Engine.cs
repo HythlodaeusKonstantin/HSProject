@@ -76,6 +76,10 @@ namespace Engine.Core
             _renderSystem = new RenderSystem(gl, _entityManager, shaderManager);
             _systemManager.RegisterSystem(_renderSystem);
 
+            // 5. Система трансформаций
+            var transformSystem = new TransformSystem(_entityManager);
+            _systemManager.RegisterSystem(transformSystem);
+
         }
 
         public void UpdateAndRender(double deltaTime)
