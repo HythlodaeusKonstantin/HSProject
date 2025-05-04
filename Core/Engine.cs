@@ -80,6 +80,19 @@ namespace Engine.Core
             var transformSystem = new TransformSystem(_entityManager);
             _systemManager.RegisterSystem(transformSystem);
 
+            // 6. UI: координатная система
+            var uiCoordinateSystem = new UI.UICoordinateSystem(_logger!);
+
+            // 7. UI System
+            var uiSystem = new UI.Systems.UISystem(_logger!, uiCoordinateSystem, _entityManager);
+            _systemManager.RegisterSystem(uiSystem);
+            uiSystem.Initialize();
+
+              // 8. UI Render System
+            var uiRenderSystem = new UI.Rendering.UIRenderSystem(_renderSystem, _logger!, _entityManager);
+            _systemManager.RegisterSystem(uiRenderSystem);
+            uiRenderSystem.Initialize();
+
         }
 
         public void UpdateAndRender(double deltaTime)
@@ -102,6 +115,24 @@ namespace Engine.Core
             // 1. Обновить viewport OpenGL
             var gl = (_graphicsContext as GraphicsContext)?.GL;
             gl?.Viewport(0, 0, (uint)size.X, (uint)size.Y);
+
+            // 2. Обновить FBO и проекционную матрицу
+            _renderSystem?.ResizeFbo(size.X, size.Y);
+            _renderSystem?.ResizeUI(size.X, size.Y);
+            _renderSystem?.UpdateProjectionMatrix((float)size.X / size.Y);
+
+             // 3. Обновить aspect ratio у всех камер
+            if (_entityManager != null)
+            {
+                float aspectRatio = (float)size.X / size.Y;
+                var cameraEntities = _entityManager.QueryEntities(typeof(CameraComponent));
+                foreach (var entity in cameraEntities)
+                {
+                    var camera = _entityManager.GetComponent<CameraComponent>(entity);
+                    camera.AspectRatio = aspectRatio;
+                    _entityManager.AddComponent(entity, camera);
+                }
+            }
         }
     }
 }

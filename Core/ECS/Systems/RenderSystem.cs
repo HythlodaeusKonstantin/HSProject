@@ -58,7 +58,10 @@ namespace Engine.Core.Rendering
         private int _uiShaderProgramId = -1;
         private uint _uiVao = 0;
         private uint _uiVbo = 0;
+        private uint _uiEbo = 0;
         private bool _uiInitialized = false;
+
+        private uint _whiteTextureId = 0;
 
         // Хранение состояния OpenGL
         private bool _savedDepthTestEnabled = false;
@@ -486,6 +489,11 @@ namespace Engine.Core.Rendering
             {
                 _logger?.Log(LogType.Info, "RenderSystem", "Disposing");
                 shaderManager.Shutdown();
+                // --- UI ресурсы ---
+                if (_uiVao != 0) gl.DeleteVertexArray(_uiVao);
+                if (_uiVbo != 0) gl.DeleteBuffer(_uiVbo);
+                if (_uiEbo != 0) gl.DeleteBuffer(_uiEbo);
+                if (_whiteTextureId != 0) gl.DeleteTexture(_whiteTextureId);
             }
             catch (Exception ex)
             {
@@ -521,14 +529,9 @@ namespace Engine.Core.Rendering
 
         public unsafe void DrawRectangle(System.Drawing.Rectangle bounds, System.Drawing.Color color, float depth = 0)
         {
-            InitUIRendering();
-            
-            // Сохраняем состояние OpenGL
-            bool depthTestEnabled = gl.IsEnabled(EnableCap.DepthTest);
-            
+   
             // Отключаем тест глубины для 2D рендеринга
             gl.Disable(EnableCap.DepthTest);
-            
             gl.UseProgram((uint)_uiShaderProgramId);
             // Матрица ортографической проекции для UI
             var ortho = Matrix4x4.CreateOrthographicOffCenter(0, _fboWidth, _fboHeight, 0, -1, 1);
@@ -558,29 +561,37 @@ namespace Engine.Core.Rendering
                 x+w,   y+h,   1,1, r,g,b,a,
                 x,     y+h,   0,1, r,g,b,a
             };
+
+            if (_whiteTextureId == 0)
+            {
+                byte[] whitePixel = { 255, 255, 255, 255 };
+                _whiteTextureId = gl.GenTexture();
+                gl.BindTexture(GLEnum.Texture2D, _whiteTextureId);
+                fixed (byte* p = whitePixel)
+                    gl.TexImage2D(GLEnum.Texture2D, 0, (int)GLEnum.Rgba, 1, 1, 0, GLEnum.Rgba, GLEnum.UnsignedByte, p);
+                gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Nearest);
+                gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Nearest);
+                gl.BindTexture(GLEnum.Texture2D, 0);
+            }
+            int texLoc = gl.GetUniformLocation((uint)_uiShaderProgramId, "Texture");
+            gl.ActiveTexture(GLEnum.Texture0);
+            gl.BindTexture(GLEnum.Texture2D, _whiteTextureId);
+            if (texLoc >= 0) gl.Uniform1(texLoc, 0);
+
             gl.BindVertexArray(_uiVao);
             gl.BindBuffer(GLEnum.ArrayBuffer, _uiVbo);
             fixed(float* v = quadVertices) gl.BufferSubData(GLEnum.ArrayBuffer, IntPtr.Zero, (nuint)(quadVertices.Length * sizeof(float)), v);
             gl.DrawElements(GLEnum.Triangles, 6, GLEnum.UnsignedInt, (void*)IntPtr.Zero);
             gl.BindVertexArray(0);
-            
-            // Восстанавливаем предыдущее состояние
-            if (depthTestEnabled)
-                gl.Enable(EnableCap.DepthTest);
-            
+ 
             _logger?.Log(LogType.Info, "RenderSystem", $"Отрисован прямоугольник UI: {bounds}, цвет: {color}");
         }
 
         public unsafe void DrawTexture(System.Drawing.Rectangle bounds, int textureId, System.Drawing.Color tint, float depth = 0)
         {
-            InitUIRendering();
-            
-            // Сохраняем состояние OpenGL
-            bool depthTestEnabled = gl.IsEnabled(EnableCap.DepthTest);
-            
+      
             // Отключаем тест глубины для 2D рендеринга
             gl.Disable(EnableCap.DepthTest);
-            
             gl.UseProgram((uint)_uiShaderProgramId);
             // Матрица ортографической проекции для UI
             var ortho = Matrix4x4.CreateOrthographicOffCenter(0, _fboWidth, _fboHeight, 0, -1, 1);
@@ -619,11 +630,7 @@ namespace Engine.Core.Rendering
             gl.DrawElements(GLEnum.Triangles, 6, GLEnum.UnsignedInt, (void*)IntPtr.Zero);
             gl.BindVertexArray(0);
             gl.BindTexture(TextureTarget.Texture2D, 0);
-            
-            // Восстанавливаем предыдущее состояние
-            if (depthTestEnabled)
-                gl.Enable(EnableCap.DepthTest);
-            
+ 
             _logger?.Log(LogType.Info, "RenderSystem", $"Отрисована текстура UI: {bounds}, текстура: {textureId}, тон: {tint}");
         }
 
@@ -633,35 +640,23 @@ namespace Engine.Core.Rendering
             _logger?.Log(LogType.Info, "RenderSystem", $"DrawText: '{text}' at {position}, Color: {color}, Scale: {scale}, Depth: {depth} (NOT IMPLEMENTED)");
         }
 
-        private unsafe void InitUIRendering()
+        public unsafe void InitUIRendering()
         {
             if (_uiInitialized) return;
+            // Отключаем тест глубины для 2D рендеринга
+            gl.Disable(EnableCap.DepthTest);
+            // Отключаем отсечение полигонов
+            gl.Disable(EnableCap.CullFace);
             // Загружаем UI-шейдеры
-            string vertPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Core", "UI", "Rendering", "Shaders", "ui_base.vert");
-            string fragPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Core", "UI", "Rendering", "Shaders", "ui_base.frag");
-            
+            string vertPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "ui_base.vert");
+            string fragPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "ui_base.frag");
+            if (!File.Exists(vertPath) || !File.Exists(fragPath))
+                throw new FileNotFoundException($"UI shader files not found: {vertPath} или {fragPath}");
             _logger?.Log(LogType.Info, "RenderSystem", $"Загрузка UI шейдеров из: {vertPath} и {fragPath}");
-            
-            try {
-                string vertSrc = File.ReadAllText(vertPath);
-                string fragSrc = File.ReadAllText(fragPath);
-                _uiShaderProgramId = shaderManager.GetOrCreateProgram(vertSrc, fragSrc);
-                _logger?.Log(LogType.Info, "RenderSystem", $"UI шейдеры загружены, program ID: {_uiShaderProgramId}");
-            }
-            catch (Exception ex) {
-                _logger?.Log(LogType.Error, "RenderSystem", $"Ошибка загрузки UI шейдеров: {ex.Message}");
-                // Пробуем использовать версию шейдеров из исходного каталога
-                try {
-                    string vertSrc = File.ReadAllText(Path.Combine("Core", "UI", "Rendering", "Shaders", "ui_base.vert"));
-                    string fragSrc = File.ReadAllText(Path.Combine("Core", "UI", "Rendering", "Shaders", "ui_base.frag"));
-                    _uiShaderProgramId = shaderManager.GetOrCreateProgram(vertSrc, fragSrc);
-                    _logger?.Log(LogType.Info, "RenderSystem", $"UI шейдеры загружены из исходного каталога, program ID: {_uiShaderProgramId}");
-                }
-                catch (Exception innerEx) {
-                    _logger?.Log(LogType.Error, "RenderSystem", $"Критическая ошибка загрузки UI шейдеров: {innerEx.Message}");
-                    throw;
-                }
-            }
+            string vertSrc = File.ReadAllText(vertPath);
+            string fragSrc = File.ReadAllText(fragPath);
+            _uiShaderProgramId = shaderManager.GetOrCreateProgram(vertSrc, fragSrc);
+            _logger?.Log(LogType.Info, "RenderSystem", $"UI шейдеры загружены, program ID: {_uiShaderProgramId}");
 
             // Создаём VAO/VBO для quad (2 треугольника)
             float[] quadVertices = new float[] {
@@ -674,11 +669,11 @@ namespace Engine.Core.Rendering
             uint[] indices = new uint[] { 0, 1, 2, 2, 3, 0 };
             _uiVao = gl.GenVertexArray();
             _uiVbo = gl.GenBuffer();
-            uint ebo = gl.GenBuffer();
+            _uiEbo = gl.GenBuffer();
             gl.BindVertexArray(_uiVao);
             gl.BindBuffer(GLEnum.ArrayBuffer, _uiVbo);
             fixed(float* v = quadVertices) gl.BufferData(GLEnum.ArrayBuffer, (nuint)(quadVertices.Length * sizeof(float)), v, GLEnum.StaticDraw);
-            gl.BindBuffer(GLEnum.ElementArrayBuffer, ebo);
+            gl.BindBuffer(GLEnum.ElementArrayBuffer, _uiEbo);
             fixed(uint* i = indices) gl.BufferData(GLEnum.ElementArrayBuffer, (nuint)(indices.Length * sizeof(uint)), i, GLEnum.StaticDraw);
             int stride = 2 * sizeof(float) + 2 * sizeof(float) + 4 * sizeof(float); // pos+uv+color
             gl.EnableVertexAttribArray(0); gl.VertexAttribPointer((uint)0, 2, GLEnum.Float, false, (uint)stride, (void*)IntPtr.Zero);
@@ -696,6 +691,18 @@ namespace Engine.Core.Rendering
             
             _uiInitialized = true;
             _logger?.Log(LogType.Info, "RenderSystem", "UI рендеринг успешно инициализирован");
+        }
+
+        public void ResizeUI(int width, int height)
+        {
+            // Удаляем старые буферы
+            if (_uiVao != 0) gl.DeleteVertexArray(_uiVao);
+            if (_uiVbo != 0) gl.DeleteBuffer(_uiVbo);
+            if (_uiEbo != 0) gl.DeleteBuffer(_uiEbo);
+            _uiVao = 0;
+            _uiVbo = 0;
+            _uiEbo = 0;
+            _uiInitialized = false;
         }
     }
 }

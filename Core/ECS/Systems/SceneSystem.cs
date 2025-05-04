@@ -2,6 +2,9 @@ using Engine.Core.ECS;
 using Engine.Core.ECS.Components;
 using Engine.Core.Rendering;
 using Engine.Core.Graphics;
+using Engine.Core.UI.Elements;
+using Engine.Core.UI.Components;
+using Engine.Core.UI;
 using Silk.NET.Maths;
 using System.Numerics;
 
@@ -84,16 +87,33 @@ namespace Engine.Core.ECS
             ));
 
             // --- UI: демо-кнопка ---
-            // var logger = new Engine.Core.Logging.LoggerAdapter();
-            // Engine.Core.UI.Animation.UIAnimationManager.Initialize(logger);
-            // var button = Engine.Core.UI.Animation.UIAnimationExamples.CreateAnimatedButton(
-            //     logger,
-            //     new System.Numerics.Vector2(400, 300),
-            //     new System.Numerics.Vector2(150, 50),
-            //     "Нажми меня");
-            // var uiEntity = _entityManager.CreateEntity();
-            // var uiComponent = new Engine.Core.UI.UIComponent(button, button.Position, button.Size, Engine.Core.UI.CoordinateUnit.Pixels, Engine.Core.UI.CoordinateUnit.Pixels);
-            // _entityManager.AddComponent(uiEntity, uiComponent);
+            var logger = new Logging.LoggerAdapter();
+            var text = "Hello, World!";
+            var button = new UIButton(logger, text)
+            {
+                Position = new System.Numerics.Vector2(500, 500),
+                Size = new System.Numerics.Vector2(150, 50)
+            };
+             // Настраиваем стиль
+            button.Style.States[UIState.Normal].BackgroundColor = System.Drawing.Color.DarkBlue;
+            button.Style.States[UIState.Normal].TextColor = System.Drawing.Color.White;
+            
+            button.Style.States[UIState.Hover].BackgroundColor = System.Drawing.Color.Blue;
+            button.Style.States[UIState.Hover].TextColor = System.Drawing.Color.White;
+            button.Style.States[UIState.Hover].Scale = 1.05f;
+            
+            button.Style.States[UIState.Pressed].BackgroundColor = System.Drawing.Color.DarkBlue;
+            button.Style.States[UIState.Pressed].TextColor = System.Drawing.Color.LightGray;
+            button.Style.States[UIState.Pressed].Scale = 0.95f;
+            
+            button.Style.States[UIState.Disabled].BackgroundColor = System.Drawing.Color.Gray;
+            button.Style.States[UIState.Disabled].TextColor = System.Drawing.Color.DarkGray;
+            button.Style.States[UIState.Disabled].Opacity = 0.7f;
+            
+            var uiEntity = _entityManager.CreateEntity();
+            var uiComponent = new UIComponent(button, button.Position, button.Size, CoordinateUnit.Pixels, CoordinateUnit.Pixels);
+            _entityManager.AddComponent(uiEntity, uiComponent);
+
         }
 
         private static Vector4 RandomColor()
