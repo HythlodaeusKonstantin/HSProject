@@ -15,6 +15,8 @@ namespace Engine.Core.UI.Elements
         public bool IsVisible { get; set; } = true;
         public bool IsEnabled { get; set; } = true;
         public IUIElement? Parent { get; set; }
+        public virtual CoordinateUnit PositionUnit { get; set; } = CoordinateUnit.Pixels;
+        public virtual CoordinateUnit SizeUnit { get; set; } = CoordinateUnit.Pixels;
 
         protected UIElementBase(ILogger logger)
         {

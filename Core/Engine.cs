@@ -6,6 +6,7 @@ using Engine.Core.Input;
 using Engine.Core.Logging;
 using Engine.Core.ECS.Components;
 using Engine.Core.Rendering;
+using Engine.Core.UI.Systems;
 
 namespace Engine.Core
 {
@@ -22,6 +23,7 @@ namespace Engine.Core
         private readonly ILogger? _logger;
         private bool _isRunning;
         private RenderSystem _renderSystem;
+        private UISystem _uiSystem;
 
         public bool IsRunning => _isRunning;
 
@@ -83,15 +85,16 @@ namespace Engine.Core
             // 6. UI: координатная система
             var uiCoordinateSystem = new UI.UICoordinateSystem(_logger!);
 
-            // 7. UI System
-            var uiSystem = new UI.Systems.UISystem(_logger!, uiCoordinateSystem, _entityManager);
-            _systemManager.RegisterSystem(uiSystem);
-            uiSystem.Initialize();
-
-              // 8. UI Render System
+            // 8. UI Render System
             var uiRenderSystem = new UI.Rendering.UIRenderSystem(_renderSystem, _logger!, _entityManager);
             _systemManager.RegisterSystem(uiRenderSystem);
             uiRenderSystem.Initialize();
+
+            // 7. UI System
+            _uiSystem = new UI.Systems.UISystem(_logger!, uiCoordinateSystem, _entityManager, _windowService, uiRenderSystem);
+            _systemManager.RegisterSystem(_uiSystem);
+            _uiSystem.Initialize();
+
 
         }
 
@@ -120,8 +123,9 @@ namespace Engine.Core
             _renderSystem?.ResizeFbo(size.X, size.Y);
             _renderSystem?.ResizeUI(size.X, size.Y);
             _renderSystem?.UpdateProjectionMatrix((float)size.X / size.Y);
+            _uiSystem?.SyncAll(new System.Numerics.Vector2(size.X, size.Y));
 
-             // 3. Обновить aspect ratio у всех камер
+            // 3. Обновить aspect ratio у всех камер
             if (_entityManager != null)
             {
                 float aspectRatio = (float)size.X / size.Y;

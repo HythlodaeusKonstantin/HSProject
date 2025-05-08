@@ -204,7 +204,7 @@ namespace Engine.Core.UI.Rendering
         /// </summary>
         private bool IsElementVisible(IUIRenderable element)
         {
-            // Проверка, находится ли элемент в viewport
+            _logger.Debug($"Проверка видимости: Bounds={element.Bounds}, Viewport={_viewport}");
             return element.Bounds.IntersectsWith(_viewport);
         }
         

@@ -1,5 +1,6 @@
 using System.Numerics;
 using Engine.Core.Logging;
+using Engine.Core.UI.Elements;
 
 namespace Engine.Core.UI
 {
@@ -99,6 +100,16 @@ namespace Engine.Core.UI
                 CoordinateUnit.ViewportUnits => ToNormalizedCoordinates(pixels),
                 _ => throw new System.ArgumentException($"Unsupported coordinate unit: {toUnit}")
             };
+        }
+
+        /// <summary>
+        /// Применить пересчёт координат и размера к UI-элементу
+        /// </summary>
+        public void ApplyToElement(UIElementBase element)
+        {
+            if (element == null) return;
+            element.Position = ToScreenCoordinates(element.Position, element.PositionUnit);
+            element.Size = ToScreenCoordinates(element.Size, element.SizeUnit);
         }
     }
 } 

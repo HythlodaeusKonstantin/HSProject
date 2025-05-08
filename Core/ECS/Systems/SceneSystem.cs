@@ -91,8 +91,10 @@ namespace Engine.Core.ECS
             var text = "Hello, World!";
             var button = new UIButton(logger, text)
             {
-                Position = new System.Numerics.Vector2(500, 500),
-                Size = new System.Numerics.Vector2(150, 50)
+                Position = new System.Numerics.Vector2(0.5f, 0.5f),
+                Size = new System.Numerics.Vector2(0.2f, 0.1f),
+                PositionUnit = CoordinateUnit.ViewportUnits,
+                SizeUnit = CoordinateUnit.ViewportUnits
             };
              // Настраиваем стиль
             button.Style.States[UIState.Normal].BackgroundColor = System.Drawing.Color.DarkBlue;
@@ -111,7 +113,7 @@ namespace Engine.Core.ECS
             button.Style.States[UIState.Disabled].Opacity = 0.7f;
             
             var uiEntity = _entityManager.CreateEntity();
-            var uiComponent = new UIComponent(button, button.Position, button.Size, CoordinateUnit.Pixels, CoordinateUnit.Pixels);
+            var uiComponent = new UIComponent(button, button.Position, button.Size, CoordinateUnit.ViewportUnits, CoordinateUnit.ViewportUnits);
             _entityManager.AddComponent(uiEntity, uiComponent);
 
         }
