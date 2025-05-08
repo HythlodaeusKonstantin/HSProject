@@ -49,6 +49,19 @@ namespace Engine.Core.UI
         }
 
         /// <summary>
+        /// Преобразовать координаты в экранные с учетом якоря (Anchor)
+        /// </summary>
+        public Vector2 ToScreenCoordinates(Vector2 position, CoordinateUnit unit, Vector2 size, UIAnchor anchor)
+        {
+            // Сначала переводим позицию в экранные координаты
+            var screenPos = ToScreenCoordinates(position, unit);
+            var screenSize = ToScreenCoordinates(size, unit);
+            // Смещение по якорю
+            var offset = GetAnchorOffset(anchor, screenSize);
+            return screenPos + offset;
+        }
+
+        /// <summary>
         /// Преобразовать координаты в экранные
         /// </summary>
         public Vector2 ToScreenCoordinates(Vector2 position, CoordinateUnit unit)
@@ -108,8 +121,28 @@ namespace Engine.Core.UI
         public void ApplyToElement(UIElementBase element)
         {
             if (element == null) return;
-            element.Position = ToScreenCoordinates(element.Position, element.PositionUnit);
+            element.Position = ToScreenCoordinates(element.Position, element.PositionUnit, element.Size, element.Anchor);
             element.Size = ToScreenCoordinates(element.Size, element.SizeUnit);
+        }
+
+        /// <summary>
+        /// Вспомогательный метод для вычисления смещения по якорю
+        /// </summary>
+        private Vector2 GetAnchorOffset(UIAnchor anchor, Vector2 size)
+        {
+            return anchor switch
+            {
+                UIAnchor.TopLeft => Vector2.Zero,
+                UIAnchor.TopCenter => new Vector2(-size.X / 2f, 0),
+                UIAnchor.TopRight => new Vector2(-size.X, 0),
+                UIAnchor.CenterLeft => new Vector2(0, -size.Y / 2f),
+                UIAnchor.Center => new Vector2(-size.X / 2f, -size.Y / 2f),
+                UIAnchor.CenterRight => new Vector2(-size.X, -size.Y / 2f),
+                UIAnchor.BottomLeft => new Vector2(0, -size.Y),
+                UIAnchor.BottomCenter => new Vector2(-size.X / 2f, -size.Y),
+                UIAnchor.BottomRight => new Vector2(-size.X, -size.Y),
+                _ => Vector2.Zero
+            };
         }
     }
 } 

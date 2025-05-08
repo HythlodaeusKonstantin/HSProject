@@ -48,6 +48,7 @@ namespace Engine.Core.UI.Systems
                 element.Size = comp.Size;
                 element.PositionUnit = comp.PositionUnit;
                 element.SizeUnit = comp.SizeUnit;
+                element.Anchor = comp.Anchor;
                 _coordinateSystem.ApplyToElement(element);
             }
         }

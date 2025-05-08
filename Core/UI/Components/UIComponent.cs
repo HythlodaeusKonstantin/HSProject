@@ -1,5 +1,6 @@
 using System.Numerics;
 using Engine.Core.ECS.Components;
+using Engine.Core.Logging;
 
 namespace Engine.Core.UI
 {
@@ -39,6 +40,11 @@ namespace Engine.Core.UI
         public bool IsVisible { get; set; }
         
         /// <summary>
+        /// Привязка UI элемента (якорь)
+        /// </summary>
+        public UIAnchor Anchor { get; set; }
+        
+        /// <summary>
         /// Создание нового UI компонента
         /// </summary>
         /// <param name="rootElement">Корневой элемент UI</param>
@@ -50,6 +56,7 @@ namespace Engine.Core.UI
             PositionUnit = CoordinateUnit.Pixels;
             SizeUnit = CoordinateUnit.Percentage;
             IsVisible = true;
+            Anchor = UIAnchor.TopLeft;
         }
         
         /// <summary>
@@ -60,9 +67,11 @@ namespace Engine.Core.UI
         /// <param name="size">Размер</param>
         /// <param name="positionUnit">Единицы измерения для позиции</param>
         /// <param name="sizeUnit">Единицы измерения для размера</param>
+        /// <param name="anchor">Привязка</param>
         public UIComponent(IUIElement rootElement, Vector2 position, Vector2 size, 
                           CoordinateUnit positionUnit = CoordinateUnit.Pixels, 
-                          CoordinateUnit sizeUnit = CoordinateUnit.Percentage)
+                          CoordinateUnit sizeUnit = CoordinateUnit.Percentage,
+                          UIAnchor anchor = UIAnchor.TopLeft)
         {
             RootElement = rootElement;
             Position = position;
@@ -70,6 +79,46 @@ namespace Engine.Core.UI
             PositionUnit = positionUnit;
             SizeUnit = sizeUnit;
             IsVisible = true;
+            Anchor = anchor;
         }
+
+        public static UIComponent CreateButton(
+            string text,
+            Vector2 position,
+            Vector2 size,
+            CoordinateUnit positionUnit = CoordinateUnit.Pixels,
+            CoordinateUnit sizeUnit = CoordinateUnit.Percentage,
+            UIAnchor anchor = UIAnchor.TopLeft,
+            UIStyle? style = null,
+            ILogger? logger = null)
+        {
+            logger ??= new Logging.LoggerAdapter();
+            var button = new Components.UIButton(logger, text)
+            {
+                Position = position,
+                Size = size,
+                PositionUnit = positionUnit,
+                SizeUnit = sizeUnit,
+                Anchor = anchor,
+                Style = style ?? new UIStyle()
+            };
+            return new UIComponent(button, position, size, positionUnit, sizeUnit, anchor);
+        }
+    }
+
+    /// <summary>
+    /// Типы привязки UI элементов
+    /// </summary>
+    public enum UIAnchor
+    {
+        TopLeft,
+        TopCenter,
+        TopRight,
+        CenterLeft,
+        Center,
+        CenterRight,
+        BottomLeft,
+        BottomCenter,
+        BottomRight
     }
 } 
