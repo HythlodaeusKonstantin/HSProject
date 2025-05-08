@@ -54,6 +54,9 @@ namespace Engine.Core.UI.Systems
                 element.PositionUnit = comp.PositionUnit;
                 element.SizeUnit = comp.SizeUnit;
                 element.Anchor = comp.Anchor;
+                // Синхронизация стиля
+                if (comp.Style != null)
+                    element.Style = comp.Style;
                 _coordinateSystem.ApplyToElement(element);
             }
         }

@@ -9,6 +9,12 @@ using Engine.Core.Logging;
 using System.Collections.Generic;
 using Engine.Core.ECS.Components;
 using Engine.Core.Graphics;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.Fonts;
 
 namespace Engine.Core.Rendering
 {
@@ -67,12 +73,15 @@ namespace Engine.Core.Rendering
         private bool _savedDepthTestEnabled = false;
         private bool _savedBlendEnabled = false;
 
+        // Кэш текстур текста
+        private readonly Dictionary<string, int> _textTextureCache = new();
+
         public RenderSystem(GL gl, IEntityManager entityManager, IShaderManager shaderManager, ILogger? logger = null)
         {
             _logger = logger;
             try
             {
-                _logger?.Log(LogType.Info, "RenderSystem", $"Log file will be created at: {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "render.log")}");
+                _logger?.Log(LogType.Info, "RenderSystem", $"Log file will be created at: {System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "render.log")}");
                 _logger?.Log(LogType.Info, "RenderSystem", $"Initializing at {DateTime.Now}");
                 _logger?.Log(LogType.Info, "RenderSystem", $"Working directory: {Environment.CurrentDirectory}");
                 _logger?.Log(LogType.Info, "RenderSystem", $"Base directory: {AppDomain.CurrentDomain.BaseDirectory}");
@@ -145,8 +154,8 @@ namespace Engine.Core.Rendering
             if (_initialized) return;
             try
             {
-                _vertSrc = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "SimpleShader.vert"));
-                _fragSrc = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "SimpleShader.frag"));
+                _vertSrc = File.ReadAllText(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "SimpleShader.vert"));
+                _fragSrc = File.ReadAllText(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "SimpleShader.frag"));
                 _logger?.Log(LogType.Info, "RenderSystem", "Loaded SimpleShader.vert and SimpleShader.frag");
                 _programId = shaderManager.GetOrCreateProgram(_vertSrc, _fragSrc);
                 _logger?.Log(LogType.Info, "RenderSystem", $"SimpleShader programId: {_programId}");
@@ -636,8 +645,52 @@ namespace Engine.Core.Rendering
 
         public void DrawText(string text, System.Numerics.Vector2 position, System.Drawing.Color color, float scale = 1.0f, float depth = 0)
         {
-            // TODO: Реализация рендера текста через SDF/BitmapFont и ui_text.frag
-            _logger?.Log(LogType.Info, "RenderSystem", $"DrawText: '{text}' at {position}, Color: {color}, Scale: {scale}, Depth: {depth} (NOT IMPLEMENTED)");
+            // Ключ для кэша текстур
+            string cacheKey = $"{text}_{color.ToArgb()}_{scale}";
+            if (!_textTextureCache.TryGetValue(cacheKey, out int textureId))
+            {
+                // Генерируем bitmap с текстом через ImageSharp
+                int width = (int)(text.Length * 16 * scale);
+                int height = (int)(32 * scale);
+                using (var img = new Image<Rgba32>(width, height))
+                {
+                    img.Mutate(ctx =>
+                    {
+                        var font = SystemFonts.CreateFont("Arial", 24 * scale);
+                        var options = new DrawingOptions
+                        {
+                            GraphicsOptions = new GraphicsOptions { Antialias = true }
+                        };
+                        ctx.DrawText(options, text, font, SixLabors.ImageSharp.Color.FromRgba(color.R, color.G, color.B, color.A), new SixLabors.ImageSharp.PointF(0, 0));
+                    });
+                    // Копируем bitmap в OpenGL-текстуру
+                    textureId = CreateGLTextureFromImage(img);
+                    _textTextureCache[cacheKey] = textureId;
+                }
+            }
+            // Рендерим quad с текстурой
+            var bounds = new System.Drawing.Rectangle((int)position.X, (int)position.Y, (int)(text.Length * 16 * scale), (int)(32 * scale));
+            DrawTexture(bounds, textureId, color, depth);
+        }
+
+        // Создание OpenGL-текстуры из ImageSharp Image
+        private int CreateGLTextureFromImage(Image<Rgba32> img)
+        {
+            var pixels = new byte[img.Width * img.Height * 4];
+            img.CopyPixelDataTo(pixels);
+            int texId = (int)gl.GenTexture();
+            gl.BindTexture(GLEnum.Texture2D, (uint)texId);
+            unsafe
+            {
+                fixed (byte* p = pixels)
+                {
+                    gl.TexImage2D(GLEnum.Texture2D, 0, (int)GLEnum.Rgba, (uint)img.Width, (uint)img.Height, 0, GLEnum.Rgba, GLEnum.UnsignedByte, p);
+                }
+            }
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMinFilter, (int)GLEnum.Linear);
+            gl.TexParameter(GLEnum.Texture2D, GLEnum.TextureMagFilter, (int)GLEnum.Linear);
+            gl.BindTexture(GLEnum.Texture2D, 0);
+            return texId;
         }
 
         public unsafe void InitUIRendering()
@@ -648,8 +701,8 @@ namespace Engine.Core.Rendering
             // Отключаем отсечение полигонов
             gl.Disable(EnableCap.CullFace);
             // Загружаем UI-шейдеры
-            string vertPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "ui_base.vert");
-            string fragPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "ui_base.frag");
+            string vertPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "ui_base.vert");
+            string fragPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders", "ui_base.frag");
             if (!File.Exists(vertPath) || !File.Exists(fragPath))
                 throw new FileNotFoundException($"UI shader files not found: {vertPath} или {fragPath}");
             _logger?.Log(LogType.Info, "RenderSystem", $"Загрузка UI шейдеров из: {vertPath} и {fragPath}");

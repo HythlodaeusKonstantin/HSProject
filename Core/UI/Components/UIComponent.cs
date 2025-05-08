@@ -45,10 +45,16 @@ namespace Engine.Core.UI
         public UIAnchor Anchor { get; set; }
         
         /// <summary>
+        /// Стиль компонента (UIStyle)
+        /// </summary>
+        public UIStyle? Style { get; set; }
+        
+        /// <summary>
         /// Создание нового UI компонента
         /// </summary>
         /// <param name="rootElement">Корневой элемент UI</param>
-        public UIComponent(IUIElement rootElement)
+        /// <param name="style">Стиль компонента</param>
+        public UIComponent(IUIElement rootElement, UIStyle? style = null)
         {
             RootElement = rootElement;
             Position = Vector2.Zero;
@@ -57,6 +63,7 @@ namespace Engine.Core.UI
             SizeUnit = CoordinateUnit.Percentage;
             IsVisible = true;
             Anchor = UIAnchor.TopLeft;
+            Style = style;
         }
         
         /// <summary>
@@ -68,10 +75,12 @@ namespace Engine.Core.UI
         /// <param name="positionUnit">Единицы измерения для позиции</param>
         /// <param name="sizeUnit">Единицы измерения для размера</param>
         /// <param name="anchor">Привязка</param>
+        /// <param name="style">Стиль компонента</param>
         public UIComponent(IUIElement rootElement, Vector2 position, Vector2 size, 
                           CoordinateUnit positionUnit = CoordinateUnit.Pixels, 
                           CoordinateUnit sizeUnit = CoordinateUnit.Percentage,
-                          UIAnchor anchor = UIAnchor.TopLeft)
+                          UIAnchor anchor = UIAnchor.TopLeft,
+                          UIStyle? style = null)
         {
             RootElement = rootElement;
             Position = position;
@@ -80,6 +89,7 @@ namespace Engine.Core.UI
             SizeUnit = sizeUnit;
             IsVisible = true;
             Anchor = anchor;
+            Style = style;
         }
 
         public static UIComponent CreateButton(
@@ -102,7 +112,7 @@ namespace Engine.Core.UI
                 Anchor = anchor,
                 Style = style ?? new UIStyle()
             };
-            return new UIComponent(button, position, size, positionUnit, sizeUnit, anchor);
+            return new UIComponent(button, position, size, positionUnit, sizeUnit, anchor, style);
         }
     }
 

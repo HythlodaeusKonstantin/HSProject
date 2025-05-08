@@ -42,6 +42,16 @@ namespace Engine.Core.UI
         public float? Opacity { get; set; }
         
         /// <summary>
+        /// Масштаб текста
+        /// </summary>
+        public float? TextScale { get; set; }
+        
+        /// <summary>
+        /// Прозрачность текста
+        /// </summary>
+        public float? TextOpacity { get; set; }
+        
+        /// <summary>
         /// Цвет границы
         /// </summary>
         public Color? BorderColor { get; set; }
@@ -163,6 +173,16 @@ namespace Engine.Core.UI
         public float Opacity { get; set; } = 1.0f;
 
         /// <summary>
+        /// Масштаб текста
+        /// </summary>
+        public float TextScale { get; set; } = 1.0f;
+
+        /// <summary>
+        /// Прозрачность текста
+        /// </summary>
+        public float TextOpacity { get; set; } = 1.0f;
+
+        /// <summary>
         /// Стили для различных состояний элемента
         /// </summary>
         public Dictionary<UIState, UIStyleState> States { get; }
@@ -199,7 +219,9 @@ namespace Engine.Core.UI
                 Padding = Padding,
                 Margin = Margin,
                 Scale = Scale,
-                Opacity = Opacity
+                Opacity = Opacity,
+                TextScale = TextScale,
+                TextOpacity = TextOpacity
             };
 
             foreach (var state in States)
@@ -210,6 +232,8 @@ namespace Engine.Core.UI
                     TextColor = state.Value.TextColor,
                     Scale = state.Value.Scale,
                     Opacity = state.Value.Opacity,
+                    TextScale = state.Value.TextScale,
+                    TextOpacity = state.Value.TextOpacity,
                     BorderColor = state.Value.BorderColor,
                     BorderWidth = state.Value.BorderWidth
                 };

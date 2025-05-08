@@ -155,24 +155,30 @@ namespace Engine.Core.UI.Components
 
             UpdateState();
             var stateStyle = GetCurrentStateStyle();
-            
-            var color = stateStyle.TextColor ?? _textColor;
-            var scale = stateStyle.Scale ?? 1.0f;
+            var style = Style;
+            var textScale = stateStyle.TextScale ?? style?.TextScale ?? 1.0f;
+            var textOpacity = stateStyle.TextOpacity ?? style?.TextOpacity ?? 1.0f;
+            var color = stateStyle.TextColor ?? style?.TextColor ?? _textColor;
+            var scale = stateStyle.Scale ?? style?.Scale ?? 1.0f;
             var position = Position;
 
             // Простая реализация выравнивания (без учета переноса слов)
             if (_alignment == TextAlignment.Center)
             {
-                // Примерное центрирование (упрощенный вариант)
-                position.X += Size.X / 2 - (_text.Length * _fontSize * 0.5f * scale);
+                position.X += Size.X / 2 - (_text.Length * _fontSize * 0.5f * scale * textScale);
             }
             else if (_alignment == TextAlignment.Right)
             {
-                // Примерное выравнивание по правому краю
-                position.X += Size.X - (_text.Length * _fontSize * scale);
+                position.X += Size.X - (_text.Length * _fontSize * scale * textScale);
             }
 
-            context.DrawText(_text, position, color, _fontSize * scale / 12.0f, ZIndex * 0.01f);
+            // Применяем прозрачность к цвету текста
+            var finalColor = System.Drawing.Color.FromArgb(
+                (int)(color.A * textOpacity),
+                color.R, color.G, color.B
+            );
+
+            context.DrawText(_text, position, finalColor, _fontSize * scale * textScale / 12.0f, ZIndex * 0.01f);
             _logger.Debug($"Rendered UIText at {Bounds}: '{_text}'");
         }
     }

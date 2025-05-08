@@ -125,6 +125,7 @@ namespace Engine.Core.UI.Components
             _label.Parent = this;
             _label.ZIndex = ZIndex + 1;
             _label.Alignment = TextAlignment.Center;
+            _label.Style = this.Style;
             _logger.Debug($"Created UIButton with text: '{text}'");
         }
 

@@ -92,9 +92,11 @@ namespace Engine.Core.ECS
             var style = new UIStyle();
             style.States[UIState.Normal].BackgroundColor = System.Drawing.Color.DarkBlue;
             style.States[UIState.Normal].TextColor = System.Drawing.Color.White;
+            style.States[UIState.Normal].TextScale = 1.5f;
             style.States[UIState.Hover].BackgroundColor = System.Drawing.Color.Blue;
             style.States[UIState.Hover].TextColor = System.Drawing.Color.White;
             style.States[UIState.Hover].Scale = 1.05f;
+            style.States[UIState.Hover].TextScale = 1.05f;
             style.States[UIState.Pressed].BackgroundColor = System.Drawing.Color.DarkBlue;
             style.States[UIState.Pressed].TextColor = System.Drawing.Color.LightGray;
             style.States[UIState.Pressed].Scale = 0.95f;

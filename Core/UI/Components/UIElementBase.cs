@@ -18,6 +18,7 @@ namespace Engine.Core.UI.Elements
         public virtual CoordinateUnit PositionUnit { get; set; } = CoordinateUnit.Pixels;
         public virtual CoordinateUnit SizeUnit { get; set; } = CoordinateUnit.Pixels;
         public virtual UIAnchor Anchor { get; set; } = UIAnchor.TopLeft;
+        public virtual UIStyle? Style { get; set; }
 
         protected UIElementBase(ILogger logger)
         {
