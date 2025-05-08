@@ -165,33 +165,44 @@ namespace Engine.Core.UI.Components
             if (!IsVisible)
                 return;
 
-            // Определение цвета на основе состояния
-            Color buttonColor;
+            // Получаем стиль для текущего состояния
+            var stateStyle = GetCurrentStateStyle();
 
-            if (!IsEnabled)
+            // Цвет кнопки: сначала из стиля, если нет — fallback на внутренние поля
+            Color buttonColor = stateStyle.BackgroundColor ?? (
+                !IsEnabled ? _disabledColor :
+                (IsPressed && IsHovered) ? _pressedColor :
+                IsHovered ? _hoverColor :
+                _normalColor
+            );
+
+            // Прозрачность
+            float opacity = stateStyle.Opacity ?? 1.0f;
+            if (opacity < 1.0f)
+                buttonColor = Color.FromArgb((int)(buttonColor.A * opacity), buttonColor.R, buttonColor.G, buttonColor.B);
+
+            // Масштаб (scale) — можно использовать для анимации, если потребуется
+            float scale = stateStyle.Scale ?? 1.0f;
+            var bounds = Bounds;
+            if (scale != 1.0f)
             {
-                buttonColor = _disabledColor;
-            }
-            else if (IsPressed && IsHovered)
-            {
-                buttonColor = _pressedColor;
-            }
-            else if (IsHovered)
-            {
-                buttonColor = _hoverColor;
-            }
-            else
-            {
-                buttonColor = _normalColor;
+                int newWidth = (int)(bounds.Width * scale);
+                int newHeight = (int)(bounds.Height * scale);
+                bounds = new Rectangle(
+                    bounds.X + (bounds.Width - newWidth) / 2,
+                    bounds.Y + (bounds.Height - newHeight) / 2,
+                    newWidth,
+                    newHeight
+                );
             }
 
             // Отрисовка фона кнопки
-            context.DrawRectangle(Bounds, buttonColor, ZIndex * 0.01f);
+            context.DrawRectangle(bounds, buttonColor, ZIndex * 0.01f);
 
             // Отрисовка текста
             _label?.Render(context);
 
-            _logger.Debug($"Rendered UIButton at {Bounds}");
+            _logger.Debug($"Rendered UIButton at {bounds}");
         }
 
         /// <summary>

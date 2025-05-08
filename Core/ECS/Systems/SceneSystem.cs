@@ -7,6 +7,7 @@ using Engine.Core.UI.Components;
 using Engine.Core.UI;
 using Silk.NET.Maths;
 using System.Numerics;
+using Silk.NET.Core.Loader;
 
 namespace Engine.Core.ECS
 {
@@ -97,6 +98,7 @@ namespace Engine.Core.ECS
             style.States[UIState.Pressed].BackgroundColor = System.Drawing.Color.DarkBlue;
             style.States[UIState.Pressed].TextColor = System.Drawing.Color.LightGray;
             style.States[UIState.Pressed].Scale = 0.95f;
+            style.States[UIState.Pressed].Opacity = 0.8f;
             style.States[UIState.Disabled].BackgroundColor = System.Drawing.Color.Gray;
             style.States[UIState.Disabled].TextColor = System.Drawing.Color.DarkGray;
             style.States[UIState.Disabled].Opacity = 0.7f;
@@ -104,11 +106,11 @@ namespace Engine.Core.ECS
             var uiEntity = _entityManager.CreateEntity();
             var uiComponent = UIComponent.CreateButton(
                 text: text,
-                position: new System.Numerics.Vector2(1.0f, 0.0f),
+                position: new System.Numerics.Vector2(0.7f, 0.7f),
                 size: new System.Numerics.Vector2(0.2f, 0.1f),
                 positionUnit: CoordinateUnit.ViewportUnits,
                 sizeUnit: CoordinateUnit.ViewportUnits,
-                anchor: UIAnchor.TopRight,
+                anchor: UIAnchor.Center,
                 style: style
             );
             _entityManager.AddComponent(uiEntity, uiComponent);
