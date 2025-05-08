@@ -15,4 +15,10 @@
     <PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Core\Rendering\Shaders\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -10,7 +10,12 @@ namespace Engine.Core.Input
         /// <summary>
         /// Основное устройство мыши
         /// </summary>
-        IMouse? PrimaryMouse { get; }
+        IMouse? mainMouse { get; }
+
+        /// <summary>
+        /// Основное устройство клавиатуры
+        /// </summary>
+        IKeyboard? mainKeyboard { get; }
 
         /// <summary>
         /// Проверить, нажата ли клавиша
