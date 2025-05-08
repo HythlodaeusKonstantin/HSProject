@@ -44,14 +44,9 @@ namespace Engine.Core.UI.Elements
         }
         
         /// <summary>
-        /// Стиль элемента
-        /// </summary>
-        public UIStyle? Style { get; set; }
-        
-        /// <summary>
         /// Текущее состояние элемента для стилизации
         /// </summary>
-        public UIState CurrentState { get; protected set; } = UIState.Normal;
+        public UIState CurrentState { get; set; } = UIState.Normal;
 
         /// <summary>
         /// Конструктор
@@ -59,7 +54,7 @@ namespace Engine.Core.UI.Elements
         /// <param name="logger">Логгер</param>
         protected UIRenderableElement(ILogger logger) : base(logger)
         {
-            Style = new UIStyle();
+            // Style = new UIStyle(); // Удалено для корректного наследования стиля
         }
 
         /// <summary>
@@ -92,15 +87,16 @@ namespace Engine.Core.UI.Elements
         }
         
         /// <summary>
-        /// Получает стиль для текущего состояния
+        /// Получает стиль для текущего состояния (ищет вверх по иерархии, если у текущего элемента стиль не задан)
         /// </summary>
         protected UIStyleState GetCurrentStateStyle()
         {
-            if (Style?.States.TryGetValue(CurrentState, out var stateStyle) == true)
+            var style = Style ?? GetEffectiveStyle();
+            if (style?.States.TryGetValue(CurrentState, out var stateStyle) == true)
             {
                 return stateStyle;
             }
-            return Style?.States[UIState.Normal] ?? new UIStyleState();
+            return style?.States[UIState.Normal] ?? new UIStyleState();
         }
     }
 } 

@@ -125,7 +125,6 @@ namespace Engine.Core.UI.Components
             _label.Parent = this;
             _label.ZIndex = ZIndex + 1;
             _label.Alignment = TextAlignment.Center;
-            _label.Style = this.Style;
             _logger.Debug($"Created UIButton with text: '{text}'");
         }
 
@@ -217,6 +216,15 @@ namespace Engine.Core.UI.Components
                 _label.ZIndex = ZIndex + 1;
             }
             _logger.Debug($"UIButton z-index changed: {ZIndex}");
+        }
+
+        protected override void UpdateState()
+        {
+            base.UpdateState();
+            if (_label != null)
+            {
+                _label.CurrentState = this.CurrentState;
+            }
         }
     }
 

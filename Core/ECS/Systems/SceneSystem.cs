@@ -88,11 +88,10 @@ namespace Engine.Core.ECS
             ));
 
             // --- UI: демо-кнопка ---
-            var text = "Hello, World!";
+            var text = "Я кнопка!";
             var style = new UIStyle();
             style.States[UIState.Normal].BackgroundColor = System.Drawing.Color.DarkBlue;
             style.States[UIState.Normal].TextColor = System.Drawing.Color.White;
-            style.States[UIState.Normal].TextScale = 1.5f;
             style.States[UIState.Hover].BackgroundColor = System.Drawing.Color.Blue;
             style.States[UIState.Hover].TextColor = System.Drawing.Color.White;
             style.States[UIState.Hover].Scale = 1.05f;
@@ -100,6 +99,7 @@ namespace Engine.Core.ECS
             style.States[UIState.Pressed].BackgroundColor = System.Drawing.Color.DarkBlue;
             style.States[UIState.Pressed].TextColor = System.Drawing.Color.LightGray;
             style.States[UIState.Pressed].Scale = 0.95f;
+            style.States[UIState.Pressed].TextScale = 0.95f;
             style.States[UIState.Pressed].Opacity = 0.8f;
             style.States[UIState.Disabled].BackgroundColor = System.Drawing.Color.Gray;
             style.States[UIState.Disabled].TextColor = System.Drawing.Color.DarkGray;

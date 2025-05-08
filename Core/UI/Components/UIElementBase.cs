@@ -56,5 +56,20 @@ namespace Engine.Core.UI.Elements
         {
             _logger.Debug($"UI element enabled state changed: {IsEnabled}");
         }
+
+        /// <summary>
+        /// Возвращает эффективный стиль для элемента (ищет вверх по иерархии, если у текущего элемента стиль не задан)
+        /// </summary>
+        public UIStyle? GetEffectiveStyle()
+        {
+            UIElementBase? current = this;
+            while (current != null)
+            {
+                if (current.Style != null)
+                    return current.Style;
+                current = current.Parent as UIElementBase;
+            }
+            return null;
+        }
     }
 } 

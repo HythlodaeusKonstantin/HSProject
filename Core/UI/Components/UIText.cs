@@ -153,7 +153,7 @@ namespace Engine.Core.UI.Components
             if (!IsVisible || string.IsNullOrEmpty(_text))
                 return;
 
-            UpdateState();
+            //UpdateState();
             var stateStyle = GetCurrentStateStyle();
             var style = Style;
             var textScale = stateStyle.TextScale ?? style?.TextScale ?? 1.0f;
