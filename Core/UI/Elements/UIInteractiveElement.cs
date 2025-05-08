@@ -46,7 +46,7 @@ namespace Engine.Core.UI.Elements
         /// Обработка события мыши
         /// </summary>
         /// <param name="args">Аргументы события мыши</param>
-        protected virtual void HandleMouseEvent(UIMouseEventArgs args)
+        public virtual void HandleMouseEvent(UIMouseEventArgs args)
         {
             if (!IsEnabled || !IsVisible || !IsInteractable)
                 return;

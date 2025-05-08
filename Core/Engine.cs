@@ -91,7 +91,7 @@ namespace Engine.Core
             uiRenderSystem.Initialize();
 
             // 7. UI System
-            _uiSystem = new UI.Systems.UISystem(_logger!, uiCoordinateSystem, _entityManager, _windowService, uiRenderSystem);
+            _uiSystem = new UI.Systems.UISystem(_logger!, uiCoordinateSystem, _entityManager, _windowService, uiRenderSystem, _inputService);
             _systemManager.RegisterSystem(_uiSystem);
             _uiSystem.Initialize();
 

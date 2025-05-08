@@ -151,7 +151,7 @@ namespace Engine.Core.UI.Components
         /// Обработка событий мыши
         /// </summary>
         /// <param name="args">Аргументы события</param>
-        protected override void HandleMouseEvent(UIMouseEventArgs args)
+        public override void HandleMouseEvent(UIMouseEventArgs args)
         {
             base.HandleMouseEvent(args);
         }

@@ -8,6 +8,7 @@ using Engine.Core.UI.Elements;
 using Engine.Core.Windowing;
 using Engine.Core.UI.Rendering;
 using System.Drawing;
+using Engine.Core.Input;
 
 namespace Engine.Core.UI.Systems
 {
@@ -21,14 +22,18 @@ namespace Engine.Core.UI.Systems
         private readonly IEntityManager _entityManager;
         private readonly IWindowService _windowService;
         private readonly IUIRenderSystem _uiRenderSystem;
+        private readonly IInputService _inputService;
+        private IUIElement? _lastHoveredElement = null;
+        private bool _lastMouseDown = false;
 
-        public UISystem(ILogger logger, UICoordinateSystem coordinateSystem, IEntityManager entityManager, IWindowService windowService, IUIRenderSystem uiRenderSystem)
+        public UISystem(ILogger logger, UICoordinateSystem coordinateSystem, IEntityManager entityManager, IWindowService windowService, IUIRenderSystem uiRenderSystem, IInputService inputService)
         {
             _logger = logger;
             _coordinateSystem = coordinateSystem;
             _entityManager = entityManager;
             _windowService = windowService;
             _uiRenderSystem = uiRenderSystem;
+            _inputService = inputService;
             _logger.Debug("UI System initialized");
         }
 
@@ -72,6 +77,43 @@ namespace Engine.Core.UI.Systems
 
         public void Update(double deltaTime)
         {
+            // --- Обработка событий мыши для UI ---
+            var mouse = _inputService.mainMouse;
+            if (mouse != null)
+            {
+                var mousePos = mouse.Position;
+                bool mouseDown = mouse.IsButtonPressed(Silk.NET.Input.MouseButton.Left);
+                IUIElement? hovered = null;
+                foreach (var entity in _entityManager.QueryEntities(typeof(UIComponent)))
+                {
+                    var comp = _entityManager.GetComponent<UIComponent>(entity);
+                    if (comp.RootElement is UIElementBase element && element.IsVisible && element is UIInteractiveElement interactive)
+                    {
+                        if (((UIRenderableElement)element).Bounds.Contains((int)mousePos.X, (int)mousePos.Y))
+                        {
+                            hovered = element;
+                            // Наведение
+                            if (_lastHoveredElement != element)
+                                interactive.HandleMouseEvent(new UIMouseEventArgs(UIMouseEventType.Enter, mousePos, mousePos));
+                            // Нажатие
+                            if (mouseDown && !_lastMouseDown)
+                                interactive.HandleMouseEvent(new UIMouseEventArgs(UIMouseEventType.Down, mousePos, mousePos));
+                            // Отпускание
+                            if (!mouseDown && _lastMouseDown)
+                                interactive.HandleMouseEvent(new UIMouseEventArgs(UIMouseEventType.Up, mousePos, mousePos));
+                        }
+                        else
+                        {
+                            // Уход мыши
+                            if (_lastHoveredElement == element)
+                                interactive.HandleMouseEvent(new UIMouseEventArgs(UIMouseEventType.Leave, mousePos, mousePos));
+                        }
+                    }
+                }
+                _lastHoveredElement = hovered;
+                _lastMouseDown = mouseDown;
+            }
+            // --- Старая логика обновления ---
             foreach (var entity in _entityManager.GetAllEntities())
             {
                 if (_entityManager.TryGetComponent<UIComponent>(entity, out var uiComponent))
